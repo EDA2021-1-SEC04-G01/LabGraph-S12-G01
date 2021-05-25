@@ -31,6 +31,9 @@ import threading
 from App import controller
 from DISClib.ADT import stack
 assert config
+import datetime
+import time
+import tracemalloc
 
 """
 La vista se encarga de la interacción con el usuario.
@@ -65,6 +68,35 @@ def printMenu():
     print("7- Estación que sirve a mas rutas: ")
     print("0- Salir")
     print("*******************************************")
+
+def getTime():
+    """
+    devuelve el instante tiempo de procesamiento en milisegundos
+    """
+    return float(time.perf_counter()*1000)
+
+
+def getMemory():
+    """
+    toma una muestra de la memoria alocada en instante de tiempo
+    """
+    return tracemalloc.take_snapshot()
+
+
+def deltaMemory(start_memory, stop_memory):
+    """
+    calcula la diferencia en memoria alocada del programa entre dos
+    instantes de tiempo y devuelve el resultado en bytes (ej.: 2100.0 B)
+    """
+    memory_diff = stop_memory.compare_to(start_memory, "filename")
+    delta_memory = 0.0
+
+    # suma de las diferencias en uso de memoria
+    for stat in memory_diff:
+        delta_memory = delta_memory + stat.size_diff
+    # de Byte -> kByte
+    delta_memory = delta_memory/1024.0
+    return delta_memory
 
 
 def optionTwo(cont):
@@ -135,7 +167,19 @@ def thread_cycle():
         elif int(inputs[0]) == 4:
             msg = "Estación Base: BusStopCode-ServiceNo (Ej: 75009-10): "
             initialStation = input(msg)
+            delta_time = -1.0
+            delta_memory = -1.0
+            tracemalloc.start()
+            start_time = getTime()
+            start_memory = getMemory()
             optionFour(cont, initialStation)
+            stop_memory = getMemory()
+            stop_time = getTime()
+            tracemalloc.stop()
+            delta_time = stop_time - start_time
+            delta_memory = deltaMemory(start_memory, stop_memory)
+            print("Tiempo [ms]: ", f"{delta_time:.3f}", "  ||  ",
+              "Memoria [kB]: ", f"{delta_memory:.3f}")
 
         elif int(inputs[0]) == 5:
             destStation = input("Estación destino (Ej: 15151-10): ")
@@ -143,7 +187,21 @@ def thread_cycle():
 
         elif int(inputs[0]) == 6:
             destStation = input("Estación destino (Ej: 15151-10): ")
+            delta_time = -1.0
+            delta_memory = -1.0
+            tracemalloc.start()
+            start_time = getTime()
+            start_memory = getMemory()
             optionSix(cont, destStation)
+            stop_memory = getMemory()
+            stop_time = getTime()
+            tracemalloc.stop()
+            delta_time = stop_time - start_time
+            delta_memory = deltaMemory(start_memory, stop_memory)
+            print("Tiempo [ms]: ", f"{delta_time:.3f}", "  ||  ",
+              "Memoria [kB]: ", f"{delta_memory:.3f}")
+            
+
 
         elif int(inputs[0]) == 7:
             optionSeven(cont)
